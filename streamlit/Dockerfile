@@ -1,0 +1,14 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+
+
+# Install streamlit
+RUN pip install --no-cache-dir streamlit
+
+COPY streamlit_app.py ./
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "streamlit_app.py", "--server.address=0.0.0.0"]

@@ -1,0 +1,11 @@
+torch>=2.2
+torchvision>=0.17
+numpy
+Pillow
+tqdm
+fastapi
+uvicorn
+mlflow
+apache-airflow==2.6.3
+streamlit
+psutil

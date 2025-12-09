@@ -1,0 +1,65 @@
+version: '3.8'
+
+networks:
+  mlsecops_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.31.0.0/24
+
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+      - MLFLOW_TRACKING_URI=http://172.31.0.3:50000
+    networks:
+      mlsecops_net:
+        ipv4_address: 172.31.0.2
+    volumes:
+      - ./app/data/data:/app/data
+      - ./app/checkpoints:/app/checkpoints
+
+  mlflow:
+    build:
+      context: ./mlflow_server
+      dockerfile: Dockerfile
+    ports:
+      - "50000:50000"
+    command: ["mlflow", "server", "--host", "0.0.0.0", "--port", "50000", "--backend-store-uri", "/mlflow_data"]
+    volumes:
+      - ./mlflow_server/mlflow_data:/mlflow_data
+    networks:
+      mlsecops_net:
+        ipv4_address: 172.31.0.3
+
+  streamlit:
+    build:
+      context: ./streamlit
+      dockerfile: Dockerfile
+    ports:
+      - "8501:8501"
+    command: ["streamlit", "run", "streamlit_app.py", "--server.address=0.0.0.0"]
+    networks:
+      mlsecops_net:
+        ipv4_address: 172.31.0.4
+
+  airflow:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    volumes:
+      - ./airflow:/airflow/dags
+    command: ["airflow", "standalone"]
+    networks:
+      mlsecops_net:
+        ipv4_address: 172.31.0.5
